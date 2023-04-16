@@ -1,5 +1,6 @@
 import socket
 import pickle
+import struct
 import threading
 import time
 from src.method.hydra.custom_training import HYDRA_Training
@@ -19,39 +20,55 @@ class SocketThread(threading.Thread):
         self.recv_timeout = recv_timeout
 
     def recv(self):
-        received_data = b""
-        while True:
-            try:
-                data = self.connection.recv(self.buffer_size)
-                received_data += data
+        # Receive the data header
+        header = self.connection.recv(4)
 
-                if data == b'': # Nothing received from the client.
-                    received_data = b""
-                    # If still nothing received for a number of seconds specified by the recv_timeout attribute, return with status 0 to close the connection.
-                    if (time.time() - self.recv_start_time) > self.recv_timeout:
-                        return None, 0 # 0 means the connection is no longer active and it should be closed.
+        # Unpack the header to get the length of the serialized data
+        data_length = struct.unpack("!I", header)[0]
+        print("Data Length:", data_length)
 
-                elif str(data)[-2] == '.':
-                    print("All data ({data_len} bytes) Received from {client_info}.".format(client_info=self.client_info, data_len=len(received_data)))
+        # Receive the serialized data
+        data_pickle = b''
+        while len(data_pickle) < data_length:
+            data = self.connection.recv(data_length - len(data_pickle))
+            if not data:
+                break
+            data_pickle += data
+        data_pickle = pickle.loads(data_pickle)
+        return data_pickle, 1
+        # while True:
+        #     try:
+        #         data = self.connection.recv(self.buffer_size)
+        #         received_data += data
 
-                    if len(received_data) > 0:
-                        try:
-                            # Decoding the data (bytes).
-                            received_data = pickle.loads(received_data)
-                            # Returning the decoded data.
-                            return received_data, 1
+        #         if data == b'': # Nothing received from the client.
+        #             received_data = b""
+        #             # If still nothing received for a number of seconds specified by the recv_timeout attribute, return with status 0 to close the connection.
+        #             if (time.time() - self.recv_start_time) > self.recv_timeout:
+        #                 return None, 0 # 0 means the connection is no longer active and it should be closed.
 
-                        except BaseException as e:
-                            print("Error Decoding the Client's Data: {msg}.\n".format(msg=e))
-                            return None, 0
+        #         elif str(data)[-2] == '.':
+        #             print("All data ({data_len} bytes) Received from {client_info}.".format(client_info=self.client_info, data_len=len(received_data)))
 
-                else:
-                    # In case data are received from the client, update the recv_start_time to the current time to reset the timeout counter.
-                    self.recv_start_time = time.time()
+        #             if len(received_data) > 0:
+        #                 try:
+        #                     # Decoding the data (bytes).
+        #                     received_data = pickle.loads(received_data)
+        #                     # Returning the decoded data.
+        #                     return received_data, 1
 
-            except BaseException as e:
-                print("Error Receiving Data from the Client: {msg}.\n".format(msg=e))
-                return None, 0
+        #                 except BaseException as e:
+        #                     print("Error Decoding the Client's Data: {msg}.\n".format(msg=e))
+        #                     return None, 0
+
+        #         else:
+        #             # In case data are received from the client, update the recv_start_time to the current time to reset the timeout counter.
+        #             self.recv_start_time = time.time()
+
+        #     except BaseException as e:
+        #         print("Error Receiving Data from the Client: {msg}.\n".format(msg=e))
+        #         return None, 0
+
 
     def model_averaging(self, model, other_model):
         # get weights of the other model
@@ -129,10 +146,16 @@ class SocketThread(threading.Thread):
                     response = pickle.dumps("Response from the Server")
                             
                 try:
+                    # data_length = len(response)
+                    # header = f"{data_length:<{HEADER_SIZE}}".encode('utf-8')
+                    # self.connection.sendall(header + response)
                     data_length = len(response)
-                    header = f"{data_length:<{HEADER_SIZE}}".encode('utf-8')
-                    self.connection.sendall(header + response)
-                    print(response)
+                    header = struct.pack("!I", data_length)
+
+                    # Send the header and serialized data
+                    self.connection.sendall(header)
+                    self.connection.sendall(response)
+                    # print(response)
                 except BaseException as e:
                     print("Error Sending Data to the Client: {msg}.\n".format(msg=e))
 
