@@ -1,6 +1,7 @@
 import socket
 import pickle
 import numpy
+from zipfile import ZipFile
 
 from sklearn.metrics import accuracy_score
 from src.method.hydra.custom_training import HYDRA_Training
@@ -8,24 +9,47 @@ from src.method.hydra.custom_training import HYDRA_Training
 model = HYDRA_Training(tr_tfrecord='tfrecords/train2.tfrecords')
 model.init_model()
 
-def recv(soc, buffer_size=1024, recv_timeout=10):
-    received_data = b""
-    while str(received_data)[-2] != '.':
-        try:
-            soc.settimeout(recv_timeout)
-            received_data += soc.recv(buffer_size)
-        except socket.timeout:
-            print("A socket.timeout exception occurred because the server did not send any data for {recv_timeout} seconds. There may be an error or the model may be trained successfully.".format(recv_timeout=recv_timeout))
-            return None, 0
-        except BaseException as e:
-            print("An error occurred while receiving data from the server {msg}.".format(msg=e))
-            return None, 0
+HEADER_SIZE = 10
 
+def recv(soc, buffer_size=1024000, recv_timeout=10):
+    # while str(received_data)[-2] != '.':
+    #     try:
+    #         soc.settimeout(recv_timeout)
+    #         received_data += soc.recv(buffer_size)
+    #     except socket.timeout:
+    #         print("A socket.timeout exception occurred because the server did not send any data for {recv_timeout} seconds. There may be an error or the model may be trained successfully.".format(recv_timeout=recv_timeout))
+    #         return None, 0
+    #     except BaseException as e:
+    #         print("An error occurred while receiving data from the server {msg}.".format(msg=e))
+    #         return None, 0
     try:
-        received_data = pickle.loads(received_data)
+        data = b''
+        header = soc.recv(HEADER_SIZE)
+        if header:
+            data_length = int(header.decode('utf-8'))
+            while len(data) < data_length:
+                chunk = soc.recv(buffer_size)
+                if not chunk:
+                    break
+                data += chunk
+
+        # return pickle.loads(data), 1
+    except Exception as e:
+        print("Error:", e)
+    
+    try:
+        received_data = pickle.loads(data)
+        # Extract the files from the zip file
+        with open('./model.zip', 'wb') as file:
+            file.write(received_data["data"])
+
+        with ZipFile('./model.zip', 'r') as zip_ref:
+            zip_ref.extractall('./')
+
     except BaseException as e:
         print("Error Decoding the Client's Data: {msg}.\n".format(msg=e))
-        return None, 0
+
+        return None, 1
 
     return received_data, 1
 
@@ -59,11 +83,13 @@ while True:
         print("Nothing Received from the Server.")
         break
     else:
-        print(received_data, end="\n\n")
+        print("./")
+        # print(received_data, end="\n\n")
 
     subject = received_data["subject"]
     if subject == "model":
-        GANN_instance = received_data["data"]
+        # GANN_instance = received_data["data"]
+        print("The server sent the model to the client.")
     elif subject == "done":
         print("The server said the model is trained successfully and no need for further updates its parameters.")
         break
@@ -71,7 +97,7 @@ while True:
         print("Unrecognized message type.")
         break
 
-    model.load_weights(weights=GANN_instance)
+    model.load_weights(weights='models/hydra/model_001.ckpt')
     weights = model.train()
 
     subject = "model"

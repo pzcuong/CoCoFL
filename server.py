@@ -8,6 +8,8 @@ model = HYDRA_Training()
 model.init_model()
 model.get_weights()
 
+HEADER_SIZE = 10
+
 class SocketThread(threading.Thread):
     def __init__(self, connection, client_info, buffer_size=1024, recv_timeout=5):
         threading.Thread.__init__(self)
@@ -77,7 +79,11 @@ class SocketThread(threading.Thread):
                 print("Replying to the Client.")
 
                 if subject == "echo":
-                    data = {"subject": "model", "data": model.get_weights()}
+                    model.get_file_weights()
+                    with open('models/hydra/models.zip', 'rb') as f:
+                        zip_data = f.read() 
+
+                    data = {"subject": "model", "data": zip_data}
                     try:
                         response = pickle.dumps(data)
                     except BaseException as e:
@@ -123,7 +129,10 @@ class SocketThread(threading.Thread):
                     response = pickle.dumps("Response from the Server")
                             
                 try:
-                    self.connection.sendall(response)
+                    data_length = len(response)
+                    header = f"{data_length:<{HEADER_SIZE}}".encode('utf-8')
+                    self.connection.sendall(header + response)
+                    print(response)
                 except BaseException as e:
                     print("Error Sending Data to the Client: {msg}.\n".format(msg=e))
 

@@ -16,5 +16,5 @@ def disconnect():
     print('Disconnected from server')
 
 if __name__ == '__main__':
-    sio.connect('https://flsocket.pzcuong2410.repl.co')  # Replace with your server's public IP address
+    sio.connect('http://103.81.87.186')  # Replace with your server's public IP address
     sio.wait()

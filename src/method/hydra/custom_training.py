@@ -1,6 +1,7 @@
 import argparse
 import tensorflow as tf
 import os
+import zipfile
 
 # from silence_tensorflow import silence_tensorflow
 # silence_tensorflow()
@@ -113,8 +114,18 @@ class HYDRA_Training():
             self.model.load_weights(latest)
             print("LOADED WEIGHTS!!!!")
 
+    def load_weights_file(self, data):
+        # self.model.load_weights(weights)
+        # Write the file data to disk
+        with open('models/hydra/model_001.ckpt', 'wb') as f:
+            f.write(data)
+        self.model.load_weights('models/hydra/model_001.ckpt')
+
     def load_weights(self, weights):
+        # self.model.load_weights(weights)
+        # Write the file data to disk
         self.model.load_weights(weights)
+
 
     def cal_avg_weights(self, weights):
         # Calculate the average weights of the model for federated learning and update the model
@@ -130,7 +141,26 @@ class HYDRA_Training():
             weights = self.train(init=True)
         if os.path.isdir("models/hydra/"):
             print("LOADING WEIGHTS!!!!")
+            weights = tf.train.latest_checkpoint("models/hydra/")            
+            
+        return weights
+
+    def get_file_weights(self):
+        # Check if the path exists
+        if not os.path.isdir("models/hydra/"):
+            print("The model path does not exist. Creating a new one...")
+            # print("Path: {}".format(self.model))
+            weights = self.train(init=True)
+        if os.path.isdir("models/hydra/"):
+            print("LOADING WEIGHTS!!!!")
             weights = tf.train.latest_checkpoint("models/hydra/")
+
+        # Create a zip file containing the required files
+        with zipfile.ZipFile('models/hydra/models.zip', mode='w') as zip_file:
+            zip_file.write('models/hydra/checkpoint')
+            zip_file.write('models/hydra/model_001.ckpt.data-00000-of-00001')
+            zip_file.write('models/hydra/model_001.ckpt.index')
+
             
         return weights
     

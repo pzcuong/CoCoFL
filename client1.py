@@ -33,7 +33,7 @@ soc = socket.socket(family=socket.AF_INET, type=socket.SOCK_STREAM)
 print("Socket Created.\n")
 
 try:
-    soc.connect(("208.67.222.222", 3000))
+    soc.connect(("103.81.87.186", 3000))
     print("Successful Connection to the Server.\n")
 except BaseException as e:
     print("Error Connecting to the Server: {msg}".format(msg=e))
