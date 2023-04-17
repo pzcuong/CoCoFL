@@ -133,6 +133,7 @@ class HYDRA_Training():
         weights = tf.reduce_mean(weights, axis=0)
         self.model.set_weights(weights)
 
+
     def get_weights(self):
         # Check if the path exists
         if not os.path.isdir("models/hydra/"):
@@ -141,7 +142,8 @@ class HYDRA_Training():
             weights = self.train(init=True)
         if os.path.isdir("models/hydra/"):
             print("LOADING WEIGHTS!!!!")
-            weights = tf.train.latest_checkpoint("models/hydra/")            
+            weights = tf.train.latest_checkpoint("models/hydra/")  
+
             
         return weights
 
@@ -205,6 +207,8 @@ class HYDRA_Training():
                                     self.parameters['batch_size'],
                                     1)
             
+            print(d_train.shape)
+
             d_val = make_dataset(self.val_tfrecord,
                                     self.opcodes_lookup_table,
                                     self.bytes_lookup_table,

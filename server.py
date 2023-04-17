@@ -96,7 +96,8 @@ class SocketThread(threading.Thread):
                 print("Replying to the Client.")
 
                 if subject == "echo":
-                    model.get_file_weights()
+                    weight = model.get_file_weights()
+                    print(weight)
                     with open('models/hydra/models.zip', 'rb') as f:
                         zip_data = f.read() 
 

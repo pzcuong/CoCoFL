@@ -97,3 +97,4 @@ class SocketThread(threading.Thread):
         print(f"Running a Thread for the Connection with {self.client_info}.")
         while True:
             self.recv_start_time = time.time()
+
