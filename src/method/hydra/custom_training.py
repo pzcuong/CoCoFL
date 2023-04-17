@@ -2,6 +2,7 @@ import argparse
 import tensorflow as tf
 import os
 import zipfile
+import numpy as np
 
 # from silence_tensorflow import silence_tensorflow
 # silence_tensorflow()
@@ -129,9 +130,18 @@ class HYDRA_Training():
 
     def cal_avg_weights(self, weights):
         # Calculate the average weights of the model for federated learning and update the model
-        weights = tf.stack(weights, axis=0)
-        weights = tf.reduce_mean(weights, axis=0)
-        self.model.set_weights(weights)
+        # weights = tf.stack(weights, axis=0)
+        # weights = tf.reduce_mean(weights, axis=0)
+        # self.model.set_weights(weights)
+        modelW = HYDRA_Training(tr_tfrecord="tfrecords/getW.tfrecords")
+        modelW.init_model()
+        modelW.load_weights(weights='models/hydra/model_001.ckpt')
+        WOldModel = modelW.train()
+
+        avg_weights = [(w1 + w2) / 2 for w1, w2 in zip(WOldModel, weights)]
+
+        self.model.set_weights(avg_weights)
+        return avg_weights
 
 
     def get_weights(self):
@@ -207,8 +217,6 @@ class HYDRA_Training():
                                     self.parameters['batch_size'],
                                     1)
             
-            print(d_train.shape)
-
             d_val = make_dataset(self.val_tfrecord,
                                     self.opcodes_lookup_table,
                                     self.bytes_lookup_table,
