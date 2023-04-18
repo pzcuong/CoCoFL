@@ -133,10 +133,15 @@ class HYDRA_Training():
         # weights = tf.stack(weights, axis=0)
         # weights = tf.reduce_mean(weights, axis=0)
         # self.model.set_weights(weights)
-        modelW = HYDRA_Training(tr_tfrecord="tfrecords/getW.tfrecords")
-        modelW.init_model()
-        modelW.load_weights(weights='models/hydra/model_001.ckpt')
-        WOldModel = modelW.train()
+        # modelW = HYDRA_Training(tr_tfrecord="tfrecords/getW.tfrecords")
+        # modelW.init_model()
+        # modelW.load_weights(weights='models/hydra/model_001.ckpt')
+        # WOldModel = modelW.train()
+
+        self.load_weights('models/hydra/model_001.ckpt')
+        WOldModel = []
+        for layer in self.model.layers:
+            WOldModel.append(layer.weights[0].numpy())
 
         avg_weights = [(w1 + w2) / 2 for w1, w2 in zip(WOldModel, weights)]
 
@@ -265,7 +270,7 @@ class HYDRA_Training():
         # Test the model
         self.test()
         # Return weights of the model           
-        self.model.save_weights(self.checkpoint_path) # Save only the weights
+        self.model.save_weights(self.checkpoint_path, overwrite=True) # Save only the weights
         return self.model.get_weights()
 
     def validation(self, d_val, epoch):
