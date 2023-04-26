@@ -45,7 +45,7 @@
   "hidden":250,
   "buffer_size": 1024,
   "batch_size":32,
-  "epochs":25,
+  "epochs":1,
   "learning_rate":0.001,
   "input_dropout_rate":0.0,
   "dropout_rate":0.5,

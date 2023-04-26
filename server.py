@@ -134,7 +134,12 @@ class SocketThread(threading.Thread):
                         test_acc, test_loss = model.test()
 
                         if test_acc < 0.90:
-                            data = {"subject": "model", "data": GANN_instance}
+                            weight = model.get_file_weights()
+                            print(weight)
+                            with open('models/hydra/models.zip', 'rb') as f:
+                                zip_data = f.read()
+
+                            data = {"subject": "model", "data": zip_data}
                             response = pickle.dumps(data)
                         else:
                             data = {"subject": "done", "data": None}

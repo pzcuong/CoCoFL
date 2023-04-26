@@ -117,6 +117,7 @@ while True:
         break
 
     model.load_weights(weights='models/hydra/model_001.ckpt')
+    print(model.compile_model())
     weights = model.train()
 
     subject = "model"

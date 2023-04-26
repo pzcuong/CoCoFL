@@ -38,6 +38,8 @@ class HYDRA_Training():
     val_epoch_accuracy = None
     initial_loss = 10
 
+    checkpoint_path = 'models/hydra/'
+
     validation_loss_results = []
     validation_accuracy_results = []
 
@@ -125,6 +127,9 @@ class HYDRA_Training():
     def load_weights(self, weights):
         # self.model.load_weights(weights)
         # Write the file data to disk
+        # fl_model = tff.learning.from_keras_model(self.model)
+        # print(fl_model.weights)
+
         self.model.load_weights(weights)
 
 
@@ -139,10 +144,8 @@ class HYDRA_Training():
         # WOldModel = modelW.train()
 
         self.load_weights('models/hydra/model_001.ckpt')
-        WOldModel = []
-        for layer in self.model.layers:
-            WOldModel.append(layer.weights[0].numpy())
-
+        WOldModel = self.compile_model()
+        
         avg_weights = [(w1 + w2) / 2 for w1, w2 in zip(WOldModel, weights)]
 
         self.model.set_weights(avg_weights)
@@ -194,6 +197,30 @@ class HYDRA_Training():
         # Update the weights
         self.optimizer.apply_gradients(zip(gradients, self.model.trainable_variables))
         return loss, predictions
+    
+    def compile_model(self):
+        d_train = make_dataset(self.tr_tfrecord,
+                                    self.opcodes_lookup_table,
+                                    self.bytes_lookup_table,
+                                    self.parameters['buffer_size'],
+                                    self.parameters['batch_size'],
+                                    1)
+        
+        for step, (opcodes, bytes, apis, y) in enumerate(d_train):
+            loss, y_ = self.train_loop(opcodes, bytes, apis, y, True)
+        
+            with tf.GradientTape() as tape:
+                predictions = self.model(opcodes, bytes, apis, True)
+                loss = self.loss_func(y, predictions)
+
+            # Get the gradients
+            gradients = tape.gradient(loss, self.model.trainable_variables)
+            # Optionally, you can apply any gradient modifications or clipping here.
+            break
+
+        # Do not update the weights.
+        return self.model.get_weights()
+        
     
     def train(self, init=False):
         # Training loop
@@ -295,7 +322,9 @@ class HYDRA_Training():
 
     def test(self):
         # Load the model
-        self.model.load_weights(self.checkpoint_path)
+        latest = tf.train.latest_checkpoint("models/hydra/")
+        self.model.load_weights(latest)
+        # self.model.load_weights(self.checkpoint_path)
         test_epoch_loss_avg = tf.keras.metrics.Mean()
         test_epoch_accuracy = tf.keras.metrics.SparseCategoricalAccuracy()
 
