@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+	<meta charset="UTF-8">
+	<title>Malware Detection</title>
+	<link href="https://fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet">
+	<link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
+  <script src='./index.js'></script>
+	<style>
+		body {
+			font-family: 'Open Sans', sans-serif;
+			margin: 0;
+			padding: 0;
+			background: #f0f0f0;
+		}
+
+		.box-form {
+			display: flex;
+			flex-direction: row;
+			justify-content: center;
+			align-items: center;
+			height: 100vh;
+		}
+
+		.left {
+			width: 50%;
+			position: relative;
+			background: #003366;
+			padding: 60px 60px;
+			color: #fff;
+		}
+
+		.right {
+			width: 50%;
+			position: relative;
+			background: #fff;
+			padding: 60px 60px;
+		}
+
+		h5 {
+			font-size: 24px;
+			font-weight: 600;
+			margin-bottom: 20px;
+			color: #333;
+		}
+
+		.inputs input[type="file"] {
+			margin-bottom: 20px;
+		}
+
+		.inputs button {
+			padding: 10px 15px;
+			border-radius: 4px;
+			border: none;
+			background: #003366;
+			color: #fff;
+			font-size: 16px;
+			cursor: pointer;
+		}
+	</style>
+</head>
+
+<body>
+	<div class="box-form">
+		<div class="left">
+			<div class="overlay">
+				<h1>Hello,</h1>
+				<h2>Thanks for using my application</h2>
+				<p>
+					Currently, security issues and system intrusions are in need of special attention because the information of the system and users is extremely important. The breach will have a huge impact on the system.
+				</p>
+				<p>
+					This is software that can assist you to check whether the file you upload contains malware or not.
+				</p>
+			</div>
+		</div>
+
+		<div class="right">
+			<h5>Malware EXE File Detection</h5>
+      <form action="" method="post" onsubmit="uploadFile(event); return false;" id="malware_form" enctype="multipart/form-data">
+				<div class="inputs">
+					<input type="file" name="file" id="malware_file" accept=".exe,.asm">
+					<br>
+					<button>Upload and Check File</button>
+				</div>
+			</form>
+		</div>
+	</div>
+
+</body>
+</html>
